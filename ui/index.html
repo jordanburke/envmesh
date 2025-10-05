@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EnvMesh - P2P Environment Variable Sync</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 EnvMesh</h1>
+            <p>P2P Mesh Network for Environment Variables</p>
+        </header>
+
+        <div class="controls">
+            <button id="addBtn" class="btn btn-primary">+ Add Variable</button>
+            <button id="syncBtn" class="btn btn-secondary">🔄 Sync Now</button>
+            <button id="peersBtn" class="btn btn-secondary">👥 Peers</button>
+        </div>
+
+        <div id="varList" class="var-list">
+            <!-- Variables will be loaded here -->
+        </div>
+
+        <div id="addModal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Add Environment Variable</h2>
+                <input type="text" id="keyInput" placeholder="KEY" />
+                <input type="text" id="valueInput" placeholder="value" />
+                <div class="modal-actions">
+                    <button id="saveBtn" class="btn btn-primary">Save</button>
+                    <button id="cancelBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="peersModal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Connected Peers</h2>
+                <div id="peersList"></div>
+                <button id="closePeersBtn" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

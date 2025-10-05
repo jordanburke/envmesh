@@ -1,0 +1,45 @@
+[package]
+name = "envmesh"
+version = "0.1.0"
+edition = "2021"
+authors = ["Jordan Burke"]
+description = "Cross-platform P2P mesh network for environment variable sync"
+license = "MIT"
+
+[dependencies]
+# Tauri
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-shell = "2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# libp2p for P2P networking
+libp2p = { version = "0.54", features = ["gossipsub", "mdns", "noise", "tcp", "yamux", "kad"] }
+tokio = { version = "1.40", features = ["full"] }
+futures = "0.3"
+
+# Storage and encryption
+rusqlite = { version = "0.32", features = ["bundled"] }
+aes-gcm = "0.10"
+argon2 = "0.5"
+
+# CRDT
+automerge = "0.5"
+
+# Utilities
+anyhow = "1.0"
+thiserror = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.10", features = ["v4", "serde"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+clap = { version = "4.5", features = ["derive"] }
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+opt-level = 0
