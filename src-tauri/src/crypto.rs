@@ -4,8 +4,8 @@ use aes_gcm::{
     Aes256Gcm, Nonce,
 };
 use anyhow::{anyhow, Result};
-use argon2::{Argon2, PasswordHasher};
 use argon2::password_hash::{rand_core::RngCore, SaltString};
+use argon2::{Argon2, PasswordHasher};
 
 pub struct Crypto {
     cipher: Aes256Gcm,

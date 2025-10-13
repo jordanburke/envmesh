@@ -150,9 +150,7 @@ impl EnvMeshNode {
 
             // Step 3: Become LAN server (if allowed by server_mode)
             if self.config.server_mode == ServerMode::ClientOnly {
-                return Err(anyhow!(
-                    "No server available and server_mode is ClientOnly"
-                ));
+                return Err(anyhow!("No server available and server_mode is ClientOnly"));
             }
 
             tracing::info!("No server available, running election...");
@@ -236,10 +234,15 @@ impl EnvMeshNode {
     pub fn connection_info(&self) -> String {
         match &self.mode {
             NodeMode::CloudClient => format!("Connected to cloud: {}", self.config.cloud_url),
-            NodeMode::LanClient { server_addr } => format!("Connected to LAN server: {}", server_addr),
+            NodeMode::LanClient { server_addr } => {
+                format!("Connected to LAN server: {}", server_addr)
+            }
             NodeMode::LanServer { port } => {
                 let active = self.server.as_ref().map(|_| 0).unwrap_or(0);
-                format!("Running as LAN server on port {} ({} clients)", port, active)
+                format!(
+                    "Running as LAN server on port {} ({} clients)",
+                    port, active
+                )
             }
         }
     }

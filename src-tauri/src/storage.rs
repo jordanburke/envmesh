@@ -1,8 +1,8 @@
 // Storage module for encrypted environment variables
-use rusqlite::{Connection, params};
-use std::path::PathBuf;
 use anyhow::Result;
 use chrono::Utc;
+use rusqlite::{params, Connection};
+use std::path::PathBuf;
 
 pub struct EnvStorage {
     conn: Connection,
@@ -35,15 +35,11 @@ impl EnvStorage {
     pub fn get(&self, key: &str) -> Result<Option<(String, i64, String)>> {
         let mut stmt = self.conn.prepare(
             "SELECT value, timestamp, machine_id FROM env_vars
-             WHERE key = ? AND deleted = 0"
+             WHERE key = ? AND deleted = 0",
         )?;
 
         let result = stmt.query_row(params![key], |row| {
-            Ok((
-                row.get(0)?,
-                row.get(1)?,
-                row.get(2)?,
-            ))
+            Ok((row.get(0)?, row.get(1)?, row.get(2)?))
         });
 
         match result {
@@ -80,16 +76,11 @@ impl EnvStorage {
     pub fn list_all(&self) -> Result<Vec<(String, String, i64, String)>> {
         let mut stmt = self.conn.prepare(
             "SELECT key, value, timestamp, machine_id FROM env_vars
-             WHERE deleted = 0 ORDER BY key"
+             WHERE deleted = 0 ORDER BY key",
         )?;
 
         let rows = stmt.query_map([], |row| {
-            Ok((
-                row.get(0)?,
-                row.get(1)?,
-                row.get(2)?,
-                row.get(3)?,
-            ))
+            Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
         })?;
 
         let mut results = Vec::new();
@@ -100,10 +91,13 @@ impl EnvStorage {
         Ok(results)
     }
 
-    pub fn get_changes_since(&self, timestamp: i64) -> Result<Vec<(String, String, i64, String, bool)>> {
+    pub fn get_changes_since(
+        &self,
+        timestamp: i64,
+    ) -> Result<Vec<(String, String, i64, String, bool)>> {
         let mut stmt = self.conn.prepare(
             "SELECT key, value, timestamp, machine_id, deleted FROM env_vars
-             WHERE timestamp > ? ORDER BY timestamp"
+             WHERE timestamp > ? ORDER BY timestamp",
         )?;
 
         let rows = stmt.query_map(params![timestamp], |row| {

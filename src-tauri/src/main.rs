@@ -1,20 +1,24 @@
 // Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod client;
-mod server;
-mod node;
-mod election;
-mod health;
-mod storage;
-mod crypto;
 mod api;
 mod cli;
-mod state;
+mod client;
 mod config;
+mod crypto;
+mod election;
+mod health;
+mod node;
+mod server;
+mod state;
+mod storage;
 
-use tauri::{Manager, menu::{Menu, MenuItem}, tray::{TrayIconBuilder, TrayIconEvent}};
 use state::AppState;
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::{TrayIconBuilder, TrayIconEvent},
+    Manager,
+};
 
 fn is_wsl() -> bool {
     std::fs::read_to_string("/proc/version")
@@ -40,11 +44,12 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             // Get app data directory
-            let app_data_dir = app.path().app_data_dir()
+            let app_data_dir = app
+                .path()
+                .app_data_dir()
                 .expect("Failed to get app data directory");
 
-            std::fs::create_dir_all(&app_data_dir)
-                .expect("Failed to create app data directory");
+            std::fs::create_dir_all(&app_data_dir).expect("Failed to create app data directory");
 
             let db_path = app_data_dir.join("envmesh.db");
 
@@ -52,7 +57,8 @@ fn main() {
 
             // Initialize app state
             let state = tauri::async_runtime::block_on(async {
-                AppState::new(db_path).await
+                AppState::new(db_path)
+                    .await
                     .expect("Failed to initialize app state")
             });
 

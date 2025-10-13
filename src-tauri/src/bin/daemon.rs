@@ -1,12 +1,12 @@
 // EnvMesh Daemon - Headless mode for WSL and servers
-use envmesh::{EnvStorage, EnvMeshNode, Config};
+use clap::Parser;
+use envmesh::{Config, EnvMeshNode, EnvStorage};
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::UnixListener;
-use serde::{Deserialize, Serialize};
-use clap::Parser;
+use tokio::sync::Mutex;
 
 #[derive(Debug, Serialize, Deserialize)]
 enum Command {
@@ -82,7 +82,10 @@ async fn main() -> anyhow::Result<()> {
 
     println!("⚙️  Configuration:");
     println!("   Server mode: {:?}", node_config.server_mode);
-    println!("   Listen address: {}:{}", node_config.listen_addr, node_config.lan_port);
+    println!(
+        "   Listen address: {}:{}",
+        node_config.listen_addr, node_config.lan_port
+    );
     println!("   Cloud enabled: {}", node_config.enable_cloud);
     if node_config.enable_cloud {
         println!("   Cloud URL: {}", node_config.cloud_url);
@@ -136,7 +139,9 @@ async fn handle_connection(
             Ok(cmd) => cmd,
             Err(e) => {
                 let resp = Response::Error(format!("Invalid command: {}", e));
-                writer.write_all(serde_json::to_string(&resp)?.as_bytes()).await?;
+                writer
+                    .write_all(serde_json::to_string(&resp)?.as_bytes())
+                    .await?;
                 writer.write_all(b"\n").await?;
                 line.clear();
                 continue;
@@ -144,7 +149,9 @@ async fn handle_connection(
         };
 
         let response = handle_command(cmd, &state).await;
-        writer.write_all(serde_json::to_string(&response)?.as_bytes()).await?;
+        writer
+            .write_all(serde_json::to_string(&response)?.as_bytes())
+            .await?;
         writer.write_all(b"\n").await?;
 
         line.clear();
@@ -181,10 +188,8 @@ async fn handle_command(cmd: Command, state: &DaemonState) -> Response {
             let storage = state.storage.lock().await;
             match storage.list_all() {
                 Ok(vars) => {
-                    let list: Vec<(String, String)> = vars
-                        .into_iter()
-                        .map(|(k, v, _, _)| (k, v))
-                        .collect();
+                    let list: Vec<(String, String)> =
+                        vars.into_iter().map(|(k, v, _, _)| (k, v)).collect();
                     Response::List(list)
                 }
                 Err(e) => Response::Error(format!("Failed to list: {}", e)),
