@@ -1,0 +1,19 @@
+# EnvMesh LAN-Only Configuration
+# Use this for offline/air-gapped environments
+
+[server]
+# Server mode: auto (will become LAN server if needed)
+mode = "auto"
+
+# Listen on all local interfaces
+listen = "0.0.0.0"
+
+# Port to listen on
+port = 8765
+
+[client]
+# Disable cloud connection (offline mode)
+enable_cloud = false
+
+# Enable LAN-only operation
+enable_lan = true

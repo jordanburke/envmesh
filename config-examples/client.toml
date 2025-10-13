@@ -1,0 +1,23 @@
+# EnvMesh Client Configuration
+# Use this config on your local machines (laptops, desktops)
+
+[server]
+# Server mode: auto (will become LAN server if needed)
+mode = "auto"
+
+# Listen on localhost only
+listen = "127.0.0.1"
+
+# Port to listen on (for LAN server mode)
+port = 8765
+
+[client]
+# Enable cloud connection
+enable_cloud = true
+
+# URL of your cloud server
+# Replace with your actual cloud server address
+cloud_url = "ws://cloud.envmesh.com:8765"
+
+# Enable LAN discovery and failover
+enable_lan = true

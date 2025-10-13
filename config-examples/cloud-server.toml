@@ -1,0 +1,19 @@
+# EnvMesh Cloud Server Configuration
+# Use this config on your VPS/cloud machine
+
+[server]
+# Server mode: always prefer being a server
+mode = "server-preferred"
+
+# Listen on all interfaces (public)
+listen = "0.0.0.0"
+
+# Port to listen on
+port = 8765
+
+[client]
+# Don't try to connect to other cloud servers
+enable_cloud = false
+
+# Enable LAN discovery (optional, can be disabled for pure cloud mode)
+enable_lan = false

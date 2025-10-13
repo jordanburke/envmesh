@@ -1,11 +1,12 @@
 // EnvMesh Daemon - Headless mode for WSL and servers
-use envmesh::{EnvStorage, P2PNode};
+use envmesh::{EnvStorage, EnvMeshNode, Config};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::UnixListener;
 use serde::{Deserialize, Serialize};
+use clap::Parser;
 
 #[derive(Debug, Serialize, Deserialize)]
 enum Command {
@@ -29,14 +30,26 @@ enum Response {
 
 struct DaemonState {
     storage: Arc<Mutex<EnvStorage>>,
-    p2p: Arc<Mutex<P2PNode>>,
+    node: Arc<Mutex<EnvMeshNode>>,
     machine_id: String,
+}
+
+#[derive(Parser, Debug)]
+#[command(name = "envmesh-daemon")]
+#[command(about = "EnvMesh background daemon for environment variable sync", long_about = None)]
+struct Args {
+    /// Path to configuration file
+    #[arg(short, long)]
+    config: Option<PathBuf>,
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Initialize logging
     tracing_subscriber::fmt::init();
+
+    // Parse command-line arguments
+    let args = Args::parse();
 
     println!("🚀 EnvMesh Daemon Starting...");
 
@@ -55,19 +68,37 @@ async fn main() -> anyhow::Result<()> {
     println!("📁 Database: {}", db_path.display());
     println!("🔌 Socket: {}", socket_path.display());
 
-    // Initialize storage and P2P
+    // Load configuration
+    let config = if let Some(config_path) = args.config {
+        println!("📄 Loading config from: {}", config_path.display());
+        Config::from_file(&config_path)?
+    } else {
+        Config::load_default()?
+    };
+
+    // Initialize storage and node
     let storage = EnvStorage::new(db_path)?;
-    let p2p = P2PNode::new().await?;
+    let node_config = config.to_node_config();
+
+    println!("⚙️  Configuration:");
+    println!("   Server mode: {:?}", node_config.server_mode);
+    println!("   Listen address: {}:{}", node_config.listen_addr, node_config.lan_port);
+    println!("   Cloud enabled: {}", node_config.enable_cloud);
+    if node_config.enable_cloud {
+        println!("   Cloud URL: {}", node_config.cloud_url);
+    }
+
+    let node = EnvMeshNode::new(node_config).await?;
     let machine_id = uuid::Uuid::new_v4().to_string();
 
     let state = Arc::new(DaemonState {
         storage: Arc::new(Mutex::new(storage)),
-        p2p: Arc::new(Mutex::new(p2p)),
+        node: Arc::new(Mutex::new(node)),
         machine_id,
     });
 
     println!("✓ Storage initialized");
-    println!("✓ P2P node initialized");
+    println!("✓ Node initialized with failover support");
     println!("\n📡 Daemon running. Use 'envmesh-cli' to interact.");
     println!("Press Ctrl+C to stop.\n");
 
@@ -160,9 +191,9 @@ async fn handle_command(cmd: Command, state: &DaemonState) -> Response {
             }
         }
         Command::Peers => {
-            let p2p = state.p2p.lock().await;
-            let peers = p2p.get_connected_peers();
-            Response::Peers(peers.into_iter().map(|(id, addr)| (id.to_string(), addr)).collect())
+            let node = state.node.lock().await;
+            let peers = node.get_peers();
+            Response::Peers(peers)
         }
         Command::Sync => {
             // TODO: Implement sync

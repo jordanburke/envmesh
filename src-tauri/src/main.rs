@@ -1,12 +1,17 @@
 // Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod p2p;
+mod client;
+mod server;
+mod node;
+mod election;
+mod health;
 mod storage;
 mod crypto;
 mod api;
 mod cli;
 mod state;
+mod config;
 
 use tauri::{Manager, menu::{Menu, MenuItem}, tray::{TrayIconBuilder, TrayIconEvent}};
 use state::AppState;

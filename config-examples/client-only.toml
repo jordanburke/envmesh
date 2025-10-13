@@ -1,0 +1,22 @@
+# EnvMesh Client-Only Configuration
+# Use this when you NEVER want to become a server
+
+[server]
+# Server mode: client-only (never become a server)
+mode = "client-only"
+
+# Listen address (not used in client-only mode)
+listen = "127.0.0.1"
+
+# Port (not used in client-only mode)
+port = 8765
+
+[client]
+# Enable cloud connection
+enable_cloud = true
+
+# URL of your cloud server
+cloud_url = "ws://cloud.envmesh.com:8765"
+
+# Enable LAN discovery (will connect to LAN servers but never become one)
+enable_lan = true
