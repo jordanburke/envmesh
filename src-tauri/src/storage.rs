@@ -1,4 +1,4 @@
-T// Storage module for encrypted environment variables
+// Storage module for encrypted environment variables
 use rusqlite::{Connection, params};
 use std::path::PathBuf;
 use anyhow::Result;
@@ -65,7 +65,7 @@ impl EnvStorage {
         Ok(())
     }
 
-    pub fn delete(&self, key: &str, machine_id: &str) -> Result<()> {
+    pub fn delete(&self, key: &str, _machine_id: &str) -> Result<()> {
         let timestamp = Utc::now().timestamp();
 
         self.conn.execute(

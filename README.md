@@ -72,11 +72,11 @@ cargo build --release
 
 ## Usage
 
-### GUI Application
+### GUI Application (Native Linux/Windows/macOS)
 
 ```bash
 # Start the GUI application
-./envmesh daemon
+./envmesh
 ```
 
 The app will appear in your system tray. Click the icon to:
@@ -85,27 +85,32 @@ The app will appear in your system tray. Click the icon to:
 - See connected peers
 - Trigger manual sync
 
-### CLI Commands
+**Note:** GUI requires a display server. For WSL/servers, use CLI mode below.
+
+### CLI Mode (WSL/Servers/Headless)
+
+Perfect for WSL, servers, and automation!
 
 ```bash
-# Set an environment variable
-envmesh set AWS_KEY=your-secret-key
+# 1. Start the daemon (background process)
+./envmesh-daemon &
 
-# Get a variable
-envmesh get AWS_KEY
+# 2. Use the CLI
+envmesh-cli set AWS_KEY=your-secret-key
+envmesh-cli get AWS_KEY
+envmesh-cli list
 
-# List all variables
-envmesh list
-
-# Export for shell (add to .bashrc/.zshrc)
-eval "$(envmesh export)"
+# 3. Shell integration (add to .bashrc/.zshrc)
+eval "$(envmesh-cli export)"
 
 # View connected peers
-envmesh peers
+envmesh-cli peers
 
-# Force sync
-envmesh sync
+# Shutdown daemon
+envmesh-cli shutdown
 ```
+
+**See [CLI_USAGE.md](CLI_USAGE.md) for detailed CLI documentation.**
 
 ### Shell Integration
 

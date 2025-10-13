@@ -6,15 +6,32 @@ authors = ["Jordan Burke"]
 description = "Cross-platform P2P mesh network for environment variable sync"
 license = "MIT"
 
+[lib]
+name = "envmesh"
+path = "src/lib.rs"
+
+[[bin]]
+name = "envmesh"
+path = "src/main.rs"
+
+[[bin]]
+name = "envmesh-daemon"
+path = "src/bin/daemon.rs"
+
+[[bin]]
+name = "envmesh-cli"
+path = "src/bin/cli.rs"
+
 [dependencies]
 # Tauri
 tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-shell = "2.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+dirs = "5.0"
 
 # libp2p for P2P networking
-libp2p = { version = "0.54", features = ["gossipsub", "mdns", "noise", "tcp", "yamux", "kad"] }
+libp2p = { version = "0.54", features = ["gossipsub", "mdns", "noise", "tcp", "yamux", "kad", "tokio", "macros"] }
 tokio = { version = "1.40", features = ["full"] }
 futures = "0.3"
 
@@ -34,6 +51,9 @@ uuid = { version = "1.10", features = ["v4", "serde"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
 clap = { version = "4.5", features = ["derive"] }
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
 
 [profile.release]
 strip = true
