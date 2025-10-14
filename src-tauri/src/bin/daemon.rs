@@ -5,8 +5,13 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio::net::UnixListener;
 use tokio::sync::Mutex;
+
+#[cfg(unix)]
+use tokio::net::{UnixListener, UnixStream};
+
+#[cfg(windows)]
+use tokio::net::{TcpListener, TcpStream};
 
 #[derive(Debug, Serialize, Deserialize)]
 enum Command {
@@ -60,13 +65,21 @@ async fn main() -> anyhow::Result<()> {
 
     std::fs::create_dir_all(&data_dir)?;
     let db_path = data_dir.join("envmesh.db");
-    let socket_path = data_dir.join("daemon.sock");
-
-    // Remove old socket if exists
-    let _ = std::fs::remove_file(&socket_path);
 
     println!("📁 Database: {}", db_path.display());
-    println!("🔌 Socket: {}", socket_path.display());
+
+    #[cfg(unix)]
+    let socket_path = data_dir.join("daemon.sock");
+
+    #[cfg(unix)]
+    {
+        // Remove old socket if exists
+        let _ = std::fs::remove_file(&socket_path);
+        println!("🔌 Socket: {}", socket_path.display());
+    }
+
+    #[cfg(windows)]
+    println!("🔌 IPC: TCP localhost:37842");
 
     // Load configuration
     let config = if let Some(config_path) = args.config {
@@ -105,31 +118,82 @@ async fn main() -> anyhow::Result<()> {
     println!("\n📡 Daemon running. Use 'envmesh-cli' to interact.");
     println!("Press Ctrl+C to stop.\n");
 
-    // Setup Unix socket listener
-    let listener = UnixListener::bind(&socket_path)?;
-
-    // Handle connections
-    loop {
-        match listener.accept().await {
-            Ok((stream, _)) => {
-                let state = Arc::clone(&state);
-                tokio::spawn(async move {
-                    if let Err(e) = handle_connection(stream, state).await {
-                        tracing::error!("Connection error: {}", e);
-                    }
-                });
+    // Platform-specific IPC setup
+    #[cfg(unix)]
+    {
+        let listener = UnixListener::bind(&socket_path)?;
+        loop {
+            match listener.accept().await {
+                Ok((stream, _)) => {
+                    let state = Arc::clone(&state);
+                    tokio::spawn(async move {
+                        if let Err(e) = handle_connection_unix(stream, state).await {
+                            tracing::error!("Connection error: {}", e);
+                        }
+                    });
+                }
+                Err(e) => {
+                    tracing::error!("Accept error: {}", e);
+                }
             }
-            Err(e) => {
-                tracing::error!("Accept error: {}", e);
+        }
+    }
+
+    #[cfg(windows)]
+    {
+        let listener = TcpListener::bind("127.0.0.1:37842").await?;
+        loop {
+            match listener.accept().await {
+                Ok((stream, _)) => {
+                    let state = Arc::clone(&state);
+                    tokio::spawn(async move {
+                        if let Err(e) = handle_connection_tcp(stream, state).await {
+                            tracing::error!("Connection error: {}", e);
+                        }
+                    });
+                }
+                Err(e) => {
+                    tracing::error!("Accept error: {}", e);
+                }
             }
         }
     }
 }
 
-async fn handle_connection(
-    stream: tokio::net::UnixStream,
-    state: Arc<DaemonState>,
-) -> anyhow::Result<()> {
+#[cfg(unix)]
+async fn handle_connection_unix(stream: UnixStream, state: Arc<DaemonState>) -> anyhow::Result<()> {
+    let (reader, mut writer) = stream.into_split();
+    let mut reader = BufReader::new(reader);
+    let mut line = String::new();
+
+    while reader.read_line(&mut line).await? > 0 {
+        let cmd: Command = match serde_json::from_str(&line) {
+            Ok(cmd) => cmd,
+            Err(e) => {
+                let resp = Response::Error(format!("Invalid command: {}", e));
+                writer
+                    .write_all(serde_json::to_string(&resp)?.as_bytes())
+                    .await?;
+                writer.write_all(b"\n").await?;
+                line.clear();
+                continue;
+            }
+        };
+
+        let response = handle_command(cmd, &state).await;
+        writer
+            .write_all(serde_json::to_string(&response)?.as_bytes())
+            .await?;
+        writer.write_all(b"\n").await?;
+
+        line.clear();
+    }
+
+    Ok(())
+}
+
+#[cfg(windows)]
+async fn handle_connection_tcp(stream: TcpStream, state: Arc<DaemonState>) -> anyhow::Result<()> {
     let (reader, mut writer) = stream.into_split();
     let mut reader = BufReader::new(reader);
     let mut line = String::new();
