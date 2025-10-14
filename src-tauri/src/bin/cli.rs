@@ -1,8 +1,10 @@
 // EnvMesh CLI - Command-line interface for interacting with daemon
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+
+#[cfg(unix)]
+use std::path::PathBuf;
 
 #[cfg(unix)]
 use tokio::net::UnixStream;
@@ -107,12 +109,15 @@ async fn main() -> anyhow::Result<()> {
     #[cfg(windows)]
     {
         // Connect to TCP daemon
-        let stream = TcpStream::connect("127.0.0.1:37842").await.map_err(|_| {
-            eprintln!("❌ Daemon not running");
-            eprintln!("\nStart the daemon first:");
-            eprintln!("  envmesh-daemon");
-            std::process::exit(1);
-        })?;
+        let stream = match TcpStream::connect("127.0.0.1:37842").await {
+            Ok(s) => s,
+            Err(_) => {
+                eprintln!("❌ Daemon not running");
+                eprintln!("\nStart the daemon first:");
+                eprintln!("  envmesh-daemon");
+                std::process::exit(1);
+            }
+        };
 
         let (reader, mut writer) = stream.into_split();
         let mut reader = BufReader::new(reader);
