@@ -35,12 +35,12 @@ impl Crypto {
         // Generate random nonce
         let mut nonce_bytes = [0u8; 12];
         OsRng.fill_bytes(&mut nonce_bytes);
-        let nonce = Nonce::from_slice(&nonce_bytes);
+        let nonce = Nonce::from(nonce_bytes);
 
         // Encrypt the data
         let ciphertext = self
             .cipher
-            .encrypt(nonce, plaintext)
+            .encrypt(&nonce, plaintext)
             .map_err(|e| anyhow!("Encryption failed: {}", e))?;
 
         // Prepend nonce to ciphertext
@@ -57,12 +57,15 @@ impl Crypto {
 
         // Extract nonce and ciphertext
         let (nonce_bytes, ciphertext) = data.split_at(12);
-        let nonce = Nonce::from_slice(nonce_bytes);
+        let nonce_array: [u8; 12] = nonce_bytes
+            .try_into()
+            .map_err(|_| anyhow!("Invalid nonce length"))?;
+        let nonce = Nonce::from(nonce_array);
 
         // Decrypt the data
         let plaintext = self
             .cipher
-            .decrypt(nonce, ciphertext)
+            .decrypt(&nonce, ciphertext)
             .map_err(|e| anyhow!("Decryption failed: {}", e))?;
 
         Ok(plaintext)

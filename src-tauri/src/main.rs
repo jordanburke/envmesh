@@ -1,5 +1,6 @@
 // Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![allow(dead_code)] // Allow dead code during development
 
 mod api;
 mod cli;
@@ -88,14 +89,13 @@ fn main() {
                     }
                     _ => {}
                 })
-                .on_tray_icon_event(|tray, event| match event {
-                    TrayIconEvent::Click { .. } => {
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click { .. } = event {
                         if let Some(app) = tray.app_handle().get_webview_window("main") {
                             let _ = app.show();
                             let _ = app.set_focus();
                         }
                     }
-                    _ => {}
                 })
                 .build(app)?;
 

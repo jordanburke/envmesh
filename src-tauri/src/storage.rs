@@ -4,6 +4,9 @@ use chrono::Utc;
 use rusqlite::{params, Connection};
 use std::path::PathBuf;
 
+/// Type alias for change records: (key, value, timestamp, machine_id, deleted)
+pub type ChangeRecord = (String, String, i64, String, bool);
+
 pub struct EnvStorage {
     conn: Connection,
 }
@@ -91,10 +94,7 @@ impl EnvStorage {
         Ok(results)
     }
 
-    pub fn get_changes_since(
-        &self,
-        timestamp: i64,
-    ) -> Result<Vec<(String, String, i64, String, bool)>> {
+    pub fn get_changes_since(&self, timestamp: i64) -> Result<Vec<ChangeRecord>> {
         let mut stmt = self.conn.prepare(
             "SELECT key, value, timestamp, machine_id, deleted FROM env_vars
              WHERE timestamp > ? ORDER BY timestamp",

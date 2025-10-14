@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use crate::node::{NodeConfig, ServerMode};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Config {
     #[serde(default)]
     pub server: ServerConfig,
@@ -42,15 +42,6 @@ pub struct ClientConfig {
     /// Enable LAN server discovery and creation
     #[serde(default = "default_true")]
     pub enable_lan: bool,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            server: ServerConfig::default(),
-            client: ClientConfig::default(),
-        }
-    }
 }
 
 impl Default for ServerConfig {
