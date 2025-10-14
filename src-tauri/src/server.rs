@@ -25,7 +25,10 @@ impl EmbeddedServer {
             .await
             .map_err(|e| anyhow!("Failed to bind to {}: {}", addr, e))?;
 
-        tracing::info!("LAN server listening on {}", addr);
+        // Get the actual bound port (important when port=0 for random port)
+        let actual_port = listener.local_addr()?.port();
+
+        tracing::info!("LAN server listening on 0.0.0.0:{}", actual_port);
 
         let connections = Arc::new(Mutex::new(Vec::new()));
         let (shutdown_tx, _) = tokio::sync::broadcast::channel(1);
@@ -59,7 +62,7 @@ impl EmbeddedServer {
 
         Ok(Self {
             connections,
-            port,
+            port: actual_port,
             _shutdown_tx: shutdown_tx,
         })
     }
